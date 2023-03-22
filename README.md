@@ -10,8 +10,8 @@ This plugin require your Askify sync Token for sync. The token will be locally s
 Any feedback or request, please submit a issue here ;)
 Thanks a lot.
 
-# Askify website Link
+## Askify website Link
 [Askify.video](https://askify.video/)
 
-# Askify Chrome Store Extension link
+## Askify Chrome Store Extension link
  [Askify Chrome Store ](https://chrome.google.com/webstore/detail/askify-youtube-notes/njdhimdgnbonemdigklhjeallomiipec)
