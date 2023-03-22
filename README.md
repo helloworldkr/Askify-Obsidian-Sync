@@ -2,7 +2,7 @@
 A Plugin for syncing between Obsidian and Askify. Supporting with Multi Language, Tags and Date, Cross-Platform. 
 
 ## How to use
-1. Visit [Askify.video](https://askify.video/sync) website. 
+1. Visit [Askify.video/sync](https://askify.video/sync) website.
 2. Copy the Obsidian Askify Sync Key
 3. Install Askify Obsidian Sync plugin in Obsidian
 4. Open Obsidian settings and scroll down to Community plugin on the left bar
