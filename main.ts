@@ -50,13 +50,13 @@ export default class MyPlugin extends Plugin {
 
 	async onload() {
 		console.log("plugin loadded..");
-
+		await this.loadSettings();
 		// This creates an icon in the left ribbon.
 		const ribbonIconEl = this.addRibbonIcon('dice', 'Askify Sync Plugin', async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			new Notice('Sync started');
 
-			await this.loadSettings();
+		
 			const mySettingValue = await this.loadData();
 			if(mySettingValue==''){
 				new Notice('Please add the Askify sync key in the plugin settings.');
@@ -278,10 +278,12 @@ class SampleSettingTab extends PluginSettingTab {
 
 		new Setting(containerEl)
 			.setName('Askify Obsidian sync key')
-			.setDesc('Get this key from the Askify websute')
+			.setDesc('Get this key from the Askify website')
+			
 			.addText(text => text
 				.setPlaceholder('Enter your key')
 				.setValue(this.plugin.settings.mySetting)
+				
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);
 					this.plugin.settings.mySetting = value;
