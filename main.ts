@@ -56,7 +56,11 @@ export default class MyPlugin extends Plugin {
 		await this.loadSettings();
 		// This creates an icon in the left ribbon.
 		// addIcon("sync", `<sync    <circle cx="50" cy="50" r="50" fill="currentColor" />`);
-		addIcon("circle", `<circle fill="#000000" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"><path d="M19.91,15.51H15.38a1,1,0,0,0,0,2h2.4A8,8,0,0,1,4,12a1,1,0,0,0-2,0,10,10,0,0,0,16.88,7.23V21a1,1,0,0,0,2,0V16.5A1,1,0,0,0,19.91,15.51ZM12,2A10,10,0,0,0,5.12,4.77V3a1,1,0,0,0-2,0V7.5a1,1,0,0,0,1,1h4.5a1,1,0,0,0,0-2H6.22A8,8,0,0,1,20,12a1,1,0,0,0,2,0A10,10,0,0,0,12,2Z"></path></g>`);
+		const svgIcon = `
+		<circle cx="50" cy="50" r="50" fill="currentColor" />
+		<circle cx="50" cy="50" r="10" ></circle>
+`;
+		addIcon("circle",svgIcon);
 		console.log("trying to load the ribbion")
 		const ribbonIconEl = this.addRibbonIcon('circle', 'Askify Sync Plugin', async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
@@ -127,6 +131,8 @@ export default class MyPlugin extends Plugin {
 			new Notice('Sync complete');
 		});
 		
+		// This adds a settings tab so the user can configure various aspects of the plugin
+		this.addSettingTab(new SampleSettingTab(this.app, this));
 		
 	
 	}
