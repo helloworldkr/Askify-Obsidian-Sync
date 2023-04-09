@@ -90,6 +90,14 @@ export default class MyPlugin extends Plugin {
 			console.log("file url recieved");
 			console.log(fileUrl);
 			//Step 2 : Download the file as zip
+			//before downloading delete the file if it exists 
+			const files = this.app.vault.getFiles()
+
+			for (let i = 0; i < files.length; i++) {
+				if(files[i].name.contains(fileName)){
+					vault.delete(files[i]);
+				}
+			}
 			await this.downloadAskifyNotesAsZip(vault, fileUrl, fileName);
 	
 	
@@ -97,9 +105,6 @@ export default class MyPlugin extends Plugin {
 			let folderPath = this.app.vault.adapter.basePath;
 			let filePath = folderPath + "/" + fileName;
 			console.log("file path = " + filePath);
-	
-	
-	
 		
 	
 			// Step 3: create a folder of Askify
@@ -116,29 +121,100 @@ export default class MyPlugin extends Plugin {
 			await unzipFile(filePath, unzip_folder);
 	
 			//Step 5: delete the zip file
-			try {
+			
+			// try {
 				
-				let deleteRes = await vault.delete(fileName);
+			// 	// let deleteRes = await vault.delete(fileName);
+			// 	// TFile file = app.vault.fil
+			// 	let deleteRes = await vault.delete();
+			// vault.delete( fileName );
+			// const file = app.vault.getAbstractFileByPath("✉️inbox/deleteThis1.md"); 
+			// await app.vault.trash(file, true); 
+			const files2 = this.app.vault.getFiles()
+
+			for (let i = 0; i < files2.length; i++) {
+				if(files2[i].name.contains(fileName)){
+					vault.delete(files2[i]);
+				}
+			}
+						
 				
-				let fsDeletion = fs.unlinkSync(filePath);
+				
+			// 	let fsDeletion = fs.unlinkSync(filePath);
 		
 			
-			} catch (e) {
-				console.log("error in deleting the file")
-				console.log(e);
-			}
+			// } catch (e) {
+			// 	console.log("error in deleting the file")
+			// 	console.log(e);
+			// }
 
 			new Notice('Sync complete');
 		});
+
+			// Perform additional things with the ribbon
+			ribbonIconEl.addClass('my-plugin-ribbon-class');
+
+			// This adds a status bar item to the bottom of the app. Does not work on mobile apps.
+			// const statusBarItemEl = this.addStatusBarItem();
+			// statusBarItemEl.setText('Status Bar Text');
+	
+			// This adds a simple command that can be triggered anywhere
+			this.addCommand({
+				id: 'open-sample-modal-simple',
+				name: 'Open sample modal (simple)',
+				callback: () => {
+					new SampleModal(this.app).open();
+				}
+			});
+			// This adds an editor command that can perform some operation on the current editor instance
+			this.addCommand({
+				id: 'sample-editor-command',
+				name: 'Sample editor command',
+				editorCallback: (editor: Editor, view: MarkdownView) => {
+					console.log(editor.getSelection());
+					editor.replaceSelection('Sample Editor Command');
+				}
+			});
+			// This adds a complex command that can check whether the current state of the app allows execution of the command
+			this.addCommand({
+				id: 'open-sample-modal-complex',
+				name: 'Open sample modal (complex)',
+				checkCallback: (checking: boolean) => {
+					// Conditions to check
+					const markdownView = this.app.workspace.getActiveViewOfType(MarkdownView);
+					if (markdownView) {
+						// If checking is true, we're simply "checking" if the command can be run.
+						// If checking is false, then we want to actually perform the operation.
+						if (!checking) {
+							new SampleModal(this.app).open();
+						}
+	
+						// This command will only show up in Command Palette when the check function returns true
+						return true;
+					}
+				}
+			});
+	
+			// This adds a settings tab so the user can configure various aspects of the plugin
+			this.addSettingTab(new SampleSettingTab(this.app, this));
+	
+			// If the plugin hooks up any global DOM events (on parts of the app that doesn't belong to this plugin)
+			// Using this function will automatically remove the event listener when this plugin is disabled.
+			this.registerDomEvent(document, 'click', (evt: MouseEvent) => {
+				console.log('click', evt);
+			});
+	
+			// When registering intervals, this function will automatically clear the interval when the plugin is disabled.
+			this.registerInterval(window.setInterval(() => console.log('setInterval'), 5 * 60 * 1000));
 		
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		// this.addSettingTab(new SampleSettingTab(this.app, this));
 		
 	
 	}
 
 	private async getNotesZipFileName(apikey) {
-		// var axios = require('axios');
+		var axios = require('axios');
 		var data = JSON.stringify({
 			"apiKey": apikey
 		});
@@ -149,15 +225,16 @@ export default class MyPlugin extends Plugin {
 			headers: {
 				'Content-Type': 'application/json'
 			},
-			data: data
+			body: data
 		};
-
+		console.log("config is ");
+		console.log(config);
 		let resp = await requestUrl(config);
 		console.log("resp is ");
 		console.log(resp);
 		console.log("json response is ");
-		console.log(resp.json);
-		return resp.json;
+		console.log(resp.text);
+		return resp.text;
 	}
 
 	private downloadAskifyNotesAsZip(vault, fileUrl, fileName) {
@@ -189,7 +266,19 @@ export default class MyPlugin extends Plugin {
 			fileData = await requestUrl({url: fileUrl}).arrayBuffer;
 
 			if(fileData!=null){
-				vault.createBinary(fileName, fileData);
+				console.log("file data is not null and file name is "+ fileName);
+				try{
+				await vault.createBinary(fileName, fileData);
+				}
+				catch(e){
+					console.log("error in creating file");
+					console.log(e);
+				}
+				console.log("file created");
+				resolve("success");
+			}else{
+				console.log("fie data is null");
+				resolve("error");
 			}
 		});
 	}
