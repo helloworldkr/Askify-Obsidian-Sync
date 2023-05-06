@@ -5,7 +5,7 @@
 	"minAppVersion": "0.15.0",
 	"description": "This plugin help to sync notes from Askify (https://askify.video/) to Obsidian",
 	"author": "Askify founders",
-	"authorUrl": "https://askify.vidoe",
+	"authorUrl": "https://askify.video",
 	"fundingUrl": "https://askify.video/",
 	"isDesktopOnly": true
 }

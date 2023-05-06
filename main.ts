@@ -8,34 +8,27 @@ import {
 	PluginSettingTab,
 	Setting,
 	TFile,
+	TFolder,
 	addIcon,
 	Vault,
-	requestUrl
+	requestUrl,
+	TAbstractFile
 } from 'obsidian';
-// import { store } from 'obsidian';
-var request = require('request');
-var https = require('https');
-// var unzip = require('unzip')
-const AdmZip = require('adm-zip');
-const path = require('path');
-const fs = require('fs');
 
-
+import AdmZip from 'adm-zip';
 
 // Remember to rename these classes and interfaces!
 
 interface AskifyPluginSettings {
-	mySetting: string;
+	AskifySyncKeySetting: string;
 }
 
-const DEFAULT_SETTINGS: AskifyPluginSettings = {
-	mySetting: 'default'
+const ASKIFY_DEFAULT_SETTINGS: AskifyPluginSettings = {
+	AskifySyncKeySetting: 'default'
 }
 
 async function unzipFile(filePath, destPath) {
 	try {
-		
-		let fileExists = fs.existsSync(filePath)
 		
 		const zip = new AdmZip(filePath);
 
@@ -48,68 +41,62 @@ async function unzipFile(filePath, destPath) {
 
 }
 
-export default class MyPlugin extends Plugin {
+export default class AskifyPlugin extends Plugin {
 	settings: AskifyPluginSettings;
 
 	async onload() {
 		console.log("plugin loadded..");
 		await this.loadSettings();
-		// This creates an icon in the left ribbon.
-		// addIcon("sync", `<sync    <circle cx="50" cy="50" r="50" fill="currentColor" />`);
-		const svgIcon = `
-		<circle cx="50" cy="50" r="50" fill="currentColor" />
-		<circle cx="50" cy="50" r="10" ></circle>
-`;
-		addIcon("circle",svgIcon);
+
 		console.log("trying to load the ribbion")
 		const ribbonIconEl = this.addRibbonIcon('circle', 'Askify Sync Plugin', async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
-			new Notice('Sync started');
+			new Notice('Askify Sync started');
 
 		
-			const mySettingValue = await this.loadData();
-			if(mySettingValue==''){
-				new Notice('Please add the Askify sync key in the plugin settings.');
+			const askifySyncVal = await this.loadData();
+			
+			if(askifySyncVal==null ||askifySyncVal.AskifySyncKeySetting=='' || askifySyncVal.AskifySyncKeySetting=='default'){
+				new Notice('Askify Sync Failed! Please add the Askify sync key in the plugin settings.');
 				return
 			}
 
-			console.log('Value of "mySettingKey":', mySettingValue);
-			// return;
+		
 
-			const fs = require('fs');
 			const {
 				vault
 			} = this.app;
 	
 			
 			//Step 1. Create file and get its name from cloud storage 
-			let sync_key = mySettingValue.mySetting;
-			console.log("current sync key is "+ sync_key);
-			let fileName = await this.getNotesZipFileName(sync_key);
-			let fileUrl = "https://storage.googleapis.com/temporary_exports/" + fileName
-			console.log("file url recieved");
-			console.log(fileUrl);
+			
+			let sync_key = askifySyncVal.AskifySyncKeySetting; 
+	
+			let zipFileName = await this.getNotesZipFileName(sync_key);
+			let fileUrl = "https://storage.googleapis.com/temporary_exports/" + zipFileName
+		
 			//Step 2 : Download the file as zip
 			//before downloading delete the file if it exists 
 			const files = this.app.vault.getFiles()
 
-			for (let i = 0; i < files.length; i++) {
-				if(files[i].name.contains(fileName)){
-					vault.delete(files[i]);
-				}
+			const file = this.app.vault.getAbstractFileByPath(`${zipFileName}`)
+			if (file) {
+				this.app.vault.delete(file);
 			}
-			await this.downloadAskifyNotesAsZip(vault, fileUrl, fileName);
+			await this.downloadAskifyNotesAsZip(vault, fileUrl, zipFileName);
 	
 	
 			//@ts-ignore
 			let folderPath = this.app.vault.adapter.basePath;
-			let filePath = folderPath + "/" + fileName;
-			console.log("file path = " + filePath);
+			let zipFilePath = folderPath + "/" + zipFileName;
+			console.log("file path = " + zipFilePath);
 		
 	
 			// Step 3: create a folder of Askify
 			try {
-				await vault.createFolder('Askify')
+				if( !(this.app.vault.getAbstractFileByPath('Askify') instanceof TFolder) ){
+					await vault.createFolder('Askify')
+				}
 			} catch (e) {
 				console.log("error in creating the folder")
 				console.log(e);
@@ -118,30 +105,31 @@ export default class MyPlugin extends Plugin {
 			console.log("unzip folder = " + unzip_folder)
 	
 			// Step 4: unzip file in the Askify folder
-			await unzipFile(filePath, unzip_folder);
+			await unzipFile(zipFilePath, unzip_folder);
 	
 			//Step 5: delete the zip file
 			
-			const files2 = this.app.vault.getFiles()
-
-			for (let i = 0; i < files2.length; i++) {
-				if(files2[i].name.contains(fileName)){
-					vault.delete(files2[i]);
-				}
+			
+			console.log("zipfilename is " + zipFileName);
+			const file2 = this.app.vault.getAbstractFileByPath(`${zipFileName}`)
+				console.log("printing zip file");
+			console.log(file2);
+			if (file2) {
+				console.log("trying to delete the zip fie");
+				this.app.vault.delete(file2);
+			}else{
+				console.log("in else block so can't delete zip file");
 			}
-						
-
 			new Notice('Sync complete');
 		});
 		
 		// This adds a settings tab so the user can configure various aspects of the plugin
-		this.addSettingTab(new SampleSettingTab(this.app, this));
+		this.addSettingTab(new AskifySettingTab(this.app, this));
 		
 	
 	}
 
 	private async getNotesZipFileName(apikey) {
-		var axios = require('axios');
 		var data = JSON.stringify({
 			"apiKey": apikey
 		});
@@ -156,12 +144,18 @@ export default class MyPlugin extends Plugin {
 		};
 		console.log("config is ");
 		console.log(config);
-		let resp = await requestUrl(config);
-		console.log("resp is ");
-		console.log(resp);
-		console.log("json response is ");
-		console.log(resp.text);
-		return resp.text;
+		try{
+			let resp = await requestUrl(config);
+			console.log("resp is ");
+			console.log(resp);
+			
+			console.log("json response is ");
+			console.log(resp.text);
+			return resp.text;
+		}catch(e){
+			new Notice('Please add correct Askify sync key');
+		}
+		
 	}
 
 	private downloadAskifyNotesAsZip(vault, fileUrl, fileName) {
@@ -169,7 +163,8 @@ export default class MyPlugin extends Plugin {
 		let fileData: ArrayBuffer; 
 		return new Promise(async (resolve) => {
 			console.log("starting the download");
-			fileData = await requestUrl({url: fileUrl}).arrayBuffer;
+			const response = await requestUrl({url: fileUrl});
+			fileData = response.arrayBuffer;
 
 			if(fileData!=null){
 				console.log("file data is not null and file name is "+ fileName);
@@ -194,7 +189,7 @@ export default class MyPlugin extends Plugin {
 	}
 
 	async loadSettings() {
-		this.settings = Object.assign({}, DEFAULT_SETTINGS, await this.loadData());
+		this.settings = Object.assign({}, ASKIFY_DEFAULT_SETTINGS, await this.loadData());
 		// console.log("loading settings and value is ");
 		// console.log(this.settings.mySetting);
 	}
@@ -204,30 +199,10 @@ export default class MyPlugin extends Plugin {
 	}
 }
 
-class SampleModal extends Modal {
-	constructor(app: App) {
-		super(app);
-	}
+class AskifySettingTab extends PluginSettingTab {
+	plugin: AskifyPlugin;
 
-	onOpen() {
-		const {
-			contentEl
-		} = this;
-		contentEl.setText('Woah!');
-	}
-
-	onClose() {
-		const {
-			contentEl
-		} = this;
-		contentEl.empty();
-	}
-}
-
-class SampleSettingTab extends PluginSettingTab {
-	plugin: MyPlugin;
-
-	constructor(app: App, plugin: MyPlugin) {
+	constructor(app: App, plugin: AskifyPlugin) {
 		super(app, plugin);
 		this.plugin = plugin;
 	}
@@ -249,11 +224,11 @@ class SampleSettingTab extends PluginSettingTab {
 			
 			.addText(text => text
 				.setPlaceholder('Enter your key')
-				.setValue(this.plugin.settings.mySetting)
+				.setValue(this.plugin.settings.AskifySyncKeySetting)
 				
 				.onChange(async (value) => {
 					console.log('Secret: ' + value);
-					this.plugin.settings.mySetting = value;
+					this.plugin.settings.AskifySyncKeySetting = value;
 					await this.plugin.saveSettings();
 				}));
 	}
