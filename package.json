@@ -23,7 +23,6 @@
 	},
 	"dependencies": {
 		"adm-zip": "^0.5.10",
-		"build": "^0.1.4",
-		"unzip": "^0.1.11"
+		"build": "^0.1.4"
 	}
 }
