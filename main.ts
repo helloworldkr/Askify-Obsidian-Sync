@@ -89,7 +89,6 @@ export default class AskifyPlugin extends Plugin {
 			//@ts-ignore
 			let folderPath = this.app.vault.adapter.basePath;
 			let zipFilePath = folderPath + "/" + zipFileName;
-			console.log("file path = " + zipFilePath);
 		
 	
 			// Step 3: create a folder of Askify
@@ -102,7 +101,6 @@ export default class AskifyPlugin extends Plugin {
 				console.log(e);
 			}
 			let unzip_folder = folderPath + '/Askify/'
-			console.log("unzip folder = " + unzip_folder)
 	
 			// Step 4: unzip file in the Askify folder
 			await unzipFile(zipFilePath, unzip_folder);
@@ -110,15 +108,11 @@ export default class AskifyPlugin extends Plugin {
 			//Step 5: delete the zip file
 			
 			
-			console.log("zipfilename is " + zipFileName);
 			const file2 = this.app.vault.getAbstractFileByPath(`${zipFileName}`)
-				console.log("printing zip file");
-			console.log(file2);
 			if (file2) {
-				console.log("trying to delete the zip fie");
 				this.app.vault.delete(file2);
 			}else{
-				console.log("in else block so can't delete zip file");
+				console.log("Unable to delete file");
 			}
 			new Notice('Sync complete');
 		});
@@ -142,8 +136,7 @@ export default class AskifyPlugin extends Plugin {
 			},
 			body: data
 		};
-		console.log("config is ");
-		console.log(config);
+
 		try{
 			let resp = await requestUrl(config);
 			console.log("resp is ");
@@ -190,8 +183,6 @@ export default class AskifyPlugin extends Plugin {
 
 	async loadSettings() {
 		this.settings = Object.assign({}, ASKIFY_DEFAULT_SETTINGS, await this.loadData());
-		// console.log("loading settings and value is ");
-		// console.log(this.settings.mySetting);
 	}
 
 	async saveSettings() {
@@ -227,7 +218,7 @@ class AskifySettingTab extends PluginSettingTab {
 				.setValue(this.plugin.settings.AskifySyncKeySetting)
 				
 				.onChange(async (value) => {
-					console.log('Secret: ' + value);
+				
 					this.plugin.settings.AskifySyncKeySetting = value;
 					await this.plugin.saveSettings();
 				}));
