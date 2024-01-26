@@ -12,6 +12,7 @@ import {
 	addIcon,
 	Vault,
 	requestUrl,
+	request,
 	TAbstractFile
 } from 'obsidian';
 
@@ -29,7 +30,7 @@ const ASKIFY_DEFAULT_SETTINGS: AskifyPluginSettings = {
 
 async function unzipFile(filePath, destPath) {
 	try {
-		
+
 		const zip = new AdmZip(filePath);
 
 		zip.extractAllTo(destPath, true);
@@ -53,28 +54,26 @@ export default class AskifyPlugin extends Plugin {
 			// Called when the user clicks the icon.
 			new Notice('Askify Sync started');
 
-		
+			console.log("sync initiated");
 			const askifySyncVal = await this.loadData();
-			
-			if(askifySyncVal==null ||askifySyncVal.AskifySyncKeySetting=='' || askifySyncVal.AskifySyncKeySetting=='default'){
+
+			if (askifySyncVal == null || askifySyncVal.AskifySyncKeySetting == '' || askifySyncVal.AskifySyncKeySetting == 'default') {
 				new Notice('Askify Sync Failed! Please add the Askify sync key in the plugin settings.');
 				return
 			}
 
-		
-
 			const {
 				vault
 			} = this.app;
-	
-			
+
 			//Step 1. Create file and get its name from cloud storage 
-			
-			let sync_key = askifySyncVal.AskifySyncKeySetting; 
-	
+
+			let sync_key = askifySyncVal.AskifySyncKeySetting;
+
 			let zipFileName = await this.getNotesZipFileName(sync_key);
+			console.log("zipname is " + zipFileName);
 			let fileUrl = "https://storage.googleapis.com/temporary_exports/" + zipFileName
-		
+
 			//Step 2 : Download the file as zip
 			//before downloading delete the file if it exists 
 			const files = this.app.vault.getFiles()
@@ -84,16 +83,16 @@ export default class AskifyPlugin extends Plugin {
 				this.app.vault.delete(file);
 			}
 			await this.downloadAskifyNotesAsZip(vault, fileUrl, zipFileName);
-	
-	
+
+
 			//@ts-ignore
 			let folderPath = this.app.vault.adapter.basePath;
 			let zipFilePath = folderPath + "/" + zipFileName;
-		
-	
+
+
 			// Step 3: create a folder of Askify
 			try {
-				if( !(this.app.vault.getAbstractFileByPath('Askify') instanceof TFolder) ){
+				if (!(this.app.vault.getAbstractFileByPath('Askify') instanceof TFolder)) {
 					await vault.createFolder('Askify')
 				}
 			} catch (e) {
@@ -101,76 +100,90 @@ export default class AskifyPlugin extends Plugin {
 				console.log(e);
 			}
 			let unzip_folder = folderPath + '/Askify/'
-	
+
 			// Step 4: unzip file in the Askify folder
 			await unzipFile(zipFilePath, unzip_folder);
-	
+
 			//Step 5: delete the zip file
-			
-			
+
+
 			const file2 = this.app.vault.getAbstractFileByPath(`${zipFileName}`)
 			if (file2) {
 				this.app.vault.delete(file2);
-			}else{
+			} else {
 				console.log("Unable to delete file");
 			}
 			new Notice('Sync complete');
 		});
-		
+
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new AskifySettingTab(this.app, this));
-		
-	
+
+
 	}
 
 	private async getNotesZipFileName(apikey) {
+		console.log("preparing for api call");
 		var data = JSON.stringify({
 			"apiKey": apikey
 		});
 
 		var config = {
 			method: 'post',
-			url: 'https://us-central1-talk-to-videos.cloudfunctions.net/obsidianPluginSync',
+			// url: 'https://us-central1-talk-to-videos.cloudfunctions.net/obsidianPluginSync',
+			url: 'http://127.0.0.1:5001/talk-to-videos/us-central1/obsidianPluginSync',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: data
 		};
 
-		try{
+		console.log("config");
+		console.log(config);
+
+		try {
 			let resp = await requestUrl(config);
 			console.log("resp is ");
 			console.log(resp);
-			
 			console.log("json response is ");
 			console.log(resp.text);
 			return resp.text;
-		}catch(e){
-			new Notice('Please add correct Askify sync key');
+		} catch (e) {
+
+			console.log("inside try catch error");
+			console.log(e);
+			console.log(e.status);
+			console.log(e.message);
+			console.log(JSON.stringify(e, Object.getOwnPropertyNames(e)));
+			if (e.status == 417) {
+				new Notice('Free limit of 25 Syncs reached! Upgrade to Askify Essential for unlimited syncs');
+			} else {
+				new Notice('Please add correct Askify sync key');
+			}
 		}
-		
+
 	}
 
 	private downloadAskifyNotesAsZip(vault, fileUrl, fileName) {
 
-		let fileData: ArrayBuffer; 
+		let fileData: ArrayBuffer;
 		return new Promise(async (resolve) => {
 			console.log("starting the download");
-			const response = await requestUrl({url: fileUrl});
+			const response = await requestUrl({ url: fileUrl });
 			fileData = response.arrayBuffer;
 
-			if(fileData!=null){
-				console.log("file data is not null and file name is "+ fileName);
-				try{
-				await vault.createBinary(fileName, fileData);
+			if (fileData != null) {
+				console.log("file data is not null and file name is " + fileName);
+				try {
+					await vault.createBinary(fileName, fileData);
 				}
-				catch(e){
+				catch (e) {
 					console.log("error in creating file");
 					console.log(e);
 				}
 				console.log("file created");
 				resolve("success");
-			}else{
+			} else {
 				console.log("fie data is null");
 				resolve("error");
 			}
@@ -212,13 +225,13 @@ class AskifySettingTab extends PluginSettingTab {
 		new Setting(containerEl)
 			.setName('Askify Obsidian sync key')
 			.setDesc('Get this key from the Askify website')
-			
+
 			.addText(text => text
 				.setPlaceholder('Enter your key')
 				.setValue(this.plugin.settings.AskifySyncKeySetting)
-				
+
 				.onChange(async (value) => {
-				
+
 					this.plugin.settings.AskifySyncKeySetting = value;
 					await this.plugin.saveSettings();
 				}));
