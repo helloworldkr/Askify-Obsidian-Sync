@@ -214,16 +214,19 @@ class AskifySettingTab extends PluginSettingTab {
 					await this.plugin.saveSettings();
 				}));
 
-		new Setting(this.containerEl)
+		new Setting(containerEl)
 			.setName("Askify Local Folder Path")
 			.setDesc("Enter the folder path where you want to sync the notes")
-			.addSearch((cb) => {
-				new FolderSuggest(cb.inputEl);
-				cb.setPlaceholder("Example: Inbox/Askify")
+
+			.addSearch((text) => {
+				new FolderSuggest(text.inputEl);
+				text.setPlaceholder("Example: Inbox/Askify")
 					.setValue(this.plugin.settings.AskifyLocalFilePathSetting)
-					.onChange((new_folder) => {
-						this.plugin.settings.AskifyLocalFilePathSetting = new_folder;
-						this.plugin.saveSettings();
+
+					.onChange(async (value) => {
+
+						this.plugin.settings.AskifyLocalFilePathSetting = value;
+						await this.plugin.saveSettings();
 					});
 			});
 	}
