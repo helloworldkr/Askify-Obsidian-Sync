@@ -219,7 +219,7 @@ class AskifySettingTab extends PluginSettingTab {
 			.setDesc("Enter the folder path where you want to sync the notes")
 			.addSearch((cb) => {
 				new FolderSuggest(cb.inputEl);
-				cb.setPlaceholder("Example: Indox/Askify")
+				cb.setPlaceholder("Example: Inbox/Askify")
 					.setValue(this.plugin.settings.AskifyLocalFilePathSetting)
 					.onChange((new_folder) => {
 						this.plugin.settings.AskifyLocalFilePathSetting = new_folder;
