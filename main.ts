@@ -15,6 +15,8 @@ import {
 	TAbstractFile
 } from 'obsidian';
 
+import { FolderSuggest } from "./src/FolderSuggester";
+
 import AdmZip from 'adm-zip';
 
 // Remember to rename these classes and interfaces!
@@ -211,5 +213,18 @@ class AskifySettingTab extends PluginSettingTab {
 					this.plugin.settings.AskifySyncKeySetting = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(this.containerEl)
+			.setName("Askify Local Folder Path")
+			.setDesc("Enter the folder path where you want to sync the notes")
+			.addSearch((cb) => {
+				new FolderSuggest(cb.inputEl);
+				cb.setPlaceholder("Example: Indox/Askify")
+					.setValue(this.plugin.settings.AskifyLocalFilePathSetting)
+					.onChange((new_folder) => {
+						this.plugin.settings.AskifyLocalFilePathSetting = new_folder;
+						this.plugin.saveSettings();
+					});
+			});
 	}
 }
