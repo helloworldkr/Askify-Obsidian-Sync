@@ -88,8 +88,8 @@ export default class AskifyPlugin extends Plugin {
 
 			// Step 3: create a folder of Askify
 			try {
-				if (!(this.app.vault.getAbstractFileByPath('Askify') instanceof TFolder)) {
-					await vault.createFolder('Askify')
+				if (!(this.app.vault.getAbstractFileByPath(askifySyncVal.AskifyLocalFilePathSetting) instanceof TFolder)) {
+					await vault.createFolder(askifySyncVal.AskifyLocalFilePathSetting)
 				}
 			} catch (e) {
 				console.log("error in creating the folder")
