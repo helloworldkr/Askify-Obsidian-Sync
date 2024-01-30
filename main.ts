@@ -12,7 +12,6 @@ import {
 	addIcon,
 	Vault,
 	requestUrl,
-	request,
 	TAbstractFile
 } from 'obsidian';
 
@@ -30,16 +29,12 @@ const ASKIFY_DEFAULT_SETTINGS: AskifyPluginSettings = {
 
 async function unzipFile(filePath, destPath) {
 	try {
-
 		const zip = new AdmZip(filePath);
-
 		zip.extractAllTo(destPath, true);
 	} catch (e) {
 		console.log("error in unzipping the file")
 		console.log(e);
 	}
-	console.log("unzip is complete")
-
 }
 
 export default class AskifyPlugin extends Plugin {
@@ -49,7 +44,6 @@ export default class AskifyPlugin extends Plugin {
 		console.log("plugin loadded..");
 		await this.loadSettings();
 
-		console.log("trying to load the ribbion")
 		const ribbonIconEl = this.addRibbonIcon('circle', 'Askify Sync Plugin', async (evt: MouseEvent) => {
 			// Called when the user clicks the icon.
 			new Notice('Askify Sync started');
@@ -84,11 +78,9 @@ export default class AskifyPlugin extends Plugin {
 			}
 			await this.downloadAskifyNotesAsZip(vault, fileUrl, zipFileName);
 
-
 			//@ts-ignore
 			let folderPath = this.app.vault.adapter.basePath;
 			let zipFilePath = folderPath + "/" + zipFileName;
-
 
 			// Step 3: create a folder of Askify
 			try {
@@ -106,7 +98,6 @@ export default class AskifyPlugin extends Plugin {
 
 			//Step 5: delete the zip file
 
-
 			const file2 = this.app.vault.getAbstractFileByPath(`${zipFileName}`)
 			if (file2) {
 				this.app.vault.delete(file2);
@@ -118,8 +109,6 @@ export default class AskifyPlugin extends Plugin {
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new AskifySettingTab(this.app, this));
-
-
 	}
 
 	private async getNotesZipFileName(apikey) {
@@ -130,38 +119,23 @@ export default class AskifyPlugin extends Plugin {
 
 		var config = {
 			method: 'post',
-			// url: 'https://us-central1-talk-to-videos.cloudfunctions.net/obsidianPluginSync',
-			url: 'http://127.0.0.1:5001/talk-to-videos/us-central1/obsidianPluginSync',
+			url: 'https://us-central1-talk-to-videos.cloudfunctions.net/obsidianPluginSync',
 			headers: {
 				'Content-Type': 'application/json'
 			},
 			body: data
 		};
 
-		console.log("config");
-		console.log(config);
-
 		try {
 			let resp = await requestUrl(config);
-			console.log("resp is ");
-			console.log(resp);
-			console.log("json response is ");
-			console.log(resp.text);
 			return resp.text;
 		} catch (e) {
-
-			console.log("inside try catch error");
-			console.log(e);
-			console.log(e.status);
-			console.log(e.message);
-			console.log(JSON.stringify(e, Object.getOwnPropertyNames(e)));
 			if (e.status == 417) {
 				new Notice('Free limit of 25 Syncs reached! Upgrade to Askify Essential for unlimited syncs');
 			} else {
 				new Notice('Please add correct Askify sync key');
 			}
 		}
-
 	}
 
 	private downloadAskifyNotesAsZip(vault, fileUrl, fileName) {
