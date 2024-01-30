@@ -21,10 +21,12 @@ import AdmZip from 'adm-zip';
 
 interface AskifyPluginSettings {
 	AskifySyncKeySetting: string;
+	AskifyLocalFilePathSetting: string;
 }
 
 const ASKIFY_DEFAULT_SETTINGS: AskifyPluginSettings = {
-	AskifySyncKeySetting: 'default'
+	AskifySyncKeySetting: 'default',
+	AskifyLocalFilePathSetting: 'Askify'
 }
 
 async function unzipFile(filePath, destPath) {
@@ -91,7 +93,7 @@ export default class AskifyPlugin extends Plugin {
 				console.log("error in creating the folder")
 				console.log(e);
 			}
-			let unzip_folder = folderPath + '/Askify/'
+			let unzip_folder = folderPath + '/' + askifySyncVal.AskifyLocalFilePathSetting + '/'
 
 			// Step 4: unzip file in the Askify folder
 			await unzipFile(zipFilePath, unzip_folder);
