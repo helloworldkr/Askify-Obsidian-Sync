@@ -15,16 +15,20 @@ import {
 	TAbstractFile
 } from 'obsidian';
 
+import { FolderSuggest } from "./src/FolderSuggester";
+
 import AdmZip from 'adm-zip';
 
 // Remember to rename these classes and interfaces!
 
 interface AskifyPluginSettings {
 	AskifySyncKeySetting: string;
+	AskifyLocalFilePathSetting: string;
 }
 
 const ASKIFY_DEFAULT_SETTINGS: AskifyPluginSettings = {
-	AskifySyncKeySetting: 'default'
+	AskifySyncKeySetting: 'default',
+	AskifyLocalFilePathSetting: 'Askify'
 }
 
 async function unzipFile(filePath, destPath) {
@@ -84,14 +88,14 @@ export default class AskifyPlugin extends Plugin {
 
 			// Step 3: create a folder of Askify
 			try {
-				if (!(this.app.vault.getAbstractFileByPath('Askify') instanceof TFolder)) {
-					await vault.createFolder('Askify')
+				if (!(this.app.vault.getAbstractFileByPath(askifySyncVal.AskifyLocalFilePathSetting) instanceof TFolder)) {
+					await vault.createFolder(askifySyncVal.AskifyLocalFilePathSetting)
 				}
 			} catch (e) {
 				console.log("error in creating the folder")
 				console.log(e);
 			}
-			let unzip_folder = folderPath + '/Askify/'
+			let unzip_folder = folderPath + '/' + askifySyncVal.AskifyLocalFilePathSetting + '/'
 
 			// Step 4: unzip file in the Askify folder
 			await unzipFile(zipFilePath, unzip_folder);
@@ -209,5 +213,21 @@ class AskifySettingTab extends PluginSettingTab {
 					this.plugin.settings.AskifySyncKeySetting = value;
 					await this.plugin.saveSettings();
 				}));
+
+		new Setting(containerEl)
+			.setName("Askify Local Folder Path")
+			.setDesc("Enter the folder path where you want to sync the notes")
+
+			.addSearch((text) => {
+				new FolderSuggest(text.inputEl);
+				text.setPlaceholder("Example: Inbox/Askify")
+					.setValue(this.plugin.settings.AskifyLocalFilePathSetting)
+
+					.onChange(async (value) => {
+
+						this.plugin.settings.AskifyLocalFilePathSetting = value;
+						await this.plugin.saveSettings();
+					});
+			});
 	}
 }
