@@ -1,6 +1,6 @@
 {
 	"name": "askify-obsidian-sync-plugin",
-	"version": "1.0.1",
+	"version": "1.0.2",
 	"description": "This plugin to sync notes from Askify (https://askify.video) to Obsidian (https://obsidian.md)",
 	"main": "main.js",
 	"scripts": {
