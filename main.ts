@@ -135,7 +135,7 @@ export default class AskifyPlugin extends Plugin {
 			return resp.text;
 		} catch (e) {
 			if (e.status == 417) {
-				new Notice('Free limit of 25 Syncs reached! Upgrade to Askify Essential for unlimited syncs');
+				new Notice('Free limit of 12 Syncs reached! Upgrade to Askify Essential for unlimited syncs');
 			} else {
 				new Notice('Please add correct Askify sync key');
 			}
